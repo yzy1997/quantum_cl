@@ -1,0 +1,11 @@
+-- >> Start of training phase << --
+-- Starting training on experience 0 (Task 0) from train stream --
+Epoch 0 ended.
+	DiskUsage_Epoch/train_phase/train_stream/Task000 = 43531.0234
+	DiskUsage_MB/train_phase/train_stream/Task000 = 43531.0234
+	Loss_Epoch/train_phase/train_stream/Task000 = 5.3239
+	Loss_MB/train_phase/train_stream/Task000 = 5.3439
+	RunningTime_Epoch/train_phase/train_stream/Task000 = 1.6602
+	Time_Epoch/train_phase/train_stream/Task000 = 2580.6025
+	Top1_Acc_Epoch/train_phase/train_stream/Task000 = 0.0039
+	Top1_Acc_MB/train_phase/train_stream/Task000 = 0.0000

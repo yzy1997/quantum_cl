@@ -1,0 +1,6 @@
+[<avalanche.logging.wandb_logger.WandBLogger object at 0x7fba305a6bc0>]
+/home/yangz2/anaconda3/envs/quan_cl/lib/python3.10/site-packages/avalanche/training/templates/base.py:468: PositionalArgumentsDeprecatedWarning: Avalanche is transitioning to strategy constructors that accept named (keyword) arguments only. This is done to ensure that there is no confusion regarding the meaning of each argument (strategies can have many arguments). Your are passing 3 positional arguments to the Naive.__init__ method. Consider passing them as names arguments. The ability to pass positional arguments will be removed in the future.
+  warnings.warn(error_str, category=PositionalArgumentsDeprecatedWarning)
+Starting experiment...
+-- >> Start of training phase << --
+  4%|▍         | 1/24 [00:00<00:05,  4.02it/s]

@@ -1,0 +1,60 @@
+{
+  "os":  "Linux-5.15.0-122-generic-x86_64-with-glibc2.35",
+  "python":  "CPython 3.10.8",
+  "startedAt":  "2024-12-25T11:00:06.672149Z",
+  "program":  "/home/yangz2/code/quantum_cl/avalanche_logger.ipynb",
+  "codePath":  "avalanche_logger.ipynb",
+  "git":  {
+    "remote":  "https://github.com/yzy1997/quantum_cl.git",
+    "commit":  "c02166cf38801a59bac01b8af4146d69fea57478"
+  },
+  "email":  "2032165508@qq.com",
+  "root":  "/home/yangz2/code/quantum_cl",
+  "host":  "inari",
+  "executable":  "/home/yangz2/anaconda3/envs/quan_cl/bin/python",
+  "codePathLocal":  "avalanche_logger.ipynb",
+  "cpu_count":  16,
+  "cpu_count_logical":  32,
+  "gpu":  "Tesla V100-PCIE-16GB",
+  "gpu_count":  4,
+  "disk":  {
+    "/":  {
+      "total":  "471350689792",
+      "used":  "59736965120"
+    }
+  },
+  "memory":  {
+    "total":  "404301336576"
+  },
+  "cpu":  {
+    "count":  16,
+    "countLogical":  32
+  },
+  "gpu_nvidia":  [
+    {
+      "name":  "Tesla V100-PCIE-16GB",
+      "memoryTotal":  "17179869184",
+      "cudaCores":  5120,
+      "architecture":  "Volta"
+    },
+    {
+      "name":  "Tesla V100-PCIE-16GB",
+      "memoryTotal":  "17179869184",
+      "cudaCores":  5120,
+      "architecture":  "Volta"
+    },
+    {
+      "name":  "Tesla V100-PCIE-16GB",
+      "memoryTotal":  "17179869184",
+      "cudaCores":  5120,
+      "architecture":  "Volta"
+    },
+    {
+      "name":  "Tesla V100-PCIE-16GB",
+      "memoryTotal":  "17179869184",
+      "cudaCores":  5120,
+      "architecture":  "Volta"
+    }
+  ],
+  "cudaVersion":  "12.6"
+}

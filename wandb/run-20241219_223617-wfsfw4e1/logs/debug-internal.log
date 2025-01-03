@@ -1,0 +1,18 @@
+{"time":"2024-12-19T22:36:22.863247984+02:00","level":"INFO","msg":"using version","core version":"0.18.5"}
+{"time":"2024-12-19T22:36:22.863278153+02:00","level":"INFO","msg":"created symlink","path":"/home/yangz2/code/quantum_cl/wandb/run-20241219_223617-wfsfw4e1/logs/debug-core.log"}
+{"time":"2024-12-19T22:36:22.98312639+02:00","level":"INFO","msg":"created new stream","id":"wfsfw4e1"}
+{"time":"2024-12-19T22:36:22.983165918+02:00","level":"INFO","msg":"stream: started","id":"wfsfw4e1"}
+{"time":"2024-12-19T22:36:22.983199286+02:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"wfsfw4e1"}}
+{"time":"2024-12-19T22:36:22.983223988+02:00","level":"INFO","msg":"sender: started","stream_id":"wfsfw4e1"}
+{"time":"2024-12-19T22:36:22.983229294+02:00","level":"INFO","msg":"handler: started","stream_id":{"value":"wfsfw4e1"}}
+{"time":"2024-12-19T22:36:23.287824806+02:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-12-19T22:36:23.287869845+02:00","level":"WARN","msg":"handleCodeSave: program relative path is empty"}
+{"time":"2024-12-19T22:37:37.769590087+02:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-12-19T22:37:37.770502156+02:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2024-12-19T22:37:38.728248298+02:00","level":"INFO","msg":"handler: operation stats","stats":{"operations":[{"desc":"saving job artifact","runtime_seconds":0.675285193},{"desc":"uploading config.yaml","runtime_seconds":0.474734846,"progress":"713B/713B"},{"desc":"uploading output.log","runtime_seconds":0.474714646,"progress":"806B/806B"}],"total_operations":3}}
+{"time":"2024-12-19T22:37:41.109782643+02:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2024-12-19T22:37:42.339295488+02:00","level":"INFO","msg":"stream: closing","id":"wfsfw4e1"}
+{"time":"2024-12-19T22:37:42.33933835+02:00","level":"INFO","msg":"handler: closed","stream_id":{"value":"wfsfw4e1"}}
+{"time":"2024-12-19T22:37:42.339372908+02:00","level":"INFO","msg":"writer: Close: closed","stream_id":{"value":"wfsfw4e1"}}
+{"time":"2024-12-19T22:37:42.339386768+02:00","level":"INFO","msg":"sender: closed","stream_id":"wfsfw4e1"}
+{"time":"2024-12-19T22:37:42.34017724+02:00","level":"INFO","msg":"stream: closed","id":"wfsfw4e1"}

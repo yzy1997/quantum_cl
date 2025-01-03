@@ -1,0 +1,75 @@
+2024-12-19 22:37:37,720 INFO    MainThread:1515816 [wandb_setup.py:_flush():79] Current SDK version is 0.18.5
+2024-12-19 22:37:37,721 INFO    MainThread:1515816 [wandb_setup.py:_flush():79] Configure stats pid to 1515816
+2024-12-19 22:37:37,721 INFO    MainThread:1515816 [wandb_setup.py:_flush():79] Loading settings from /home/yangz2/.config/wandb/settings
+2024-12-19 22:37:37,721 INFO    MainThread:1515816 [wandb_setup.py:_flush():79] Loading settings from /home/yangz2/code/quantum_cl/wandb/settings
+2024-12-19 22:37:37,721 INFO    MainThread:1515816 [wandb_setup.py:_flush():79] Loading settings from environment variables: {}
+2024-12-19 22:37:37,721 INFO    MainThread:1515816 [wandb_setup.py:_flush():79] Applying setup settings: {'mode': None, '_disable_service': None}
+2024-12-19 22:37:37,721 INFO    MainThread:1515816 [wandb_setup.py:_flush():79] Inferring run settings from compute environment: {'program': '<python with no main file>'}
+2024-12-19 22:37:37,721 INFO    MainThread:1515816 [wandb_setup.py:_flush():79] Applying login settings: {}
+2024-12-19 22:37:37,721 INFO    MainThread:1515816 [wandb_init.py:_log_setup():534] Logging user logs to /home/yangz2/code/quantum_cl/wandb/run-20241219_223737-eeq7mofh/logs/debug.log
+2024-12-19 22:37:37,722 INFO    MainThread:1515816 [wandb_init.py:_log_setup():535] Logging internal logs to /home/yangz2/code/quantum_cl/wandb/run-20241219_223737-eeq7mofh/logs/debug-internal.log
+2024-12-19 22:37:37,722 INFO    MainThread:1515816 [wandb_init.py:_jupyter_setup():480] configuring jupyter hooks <wandb.sdk.wandb_init._WandbInit object at 0x7fba20101360>
+2024-12-19 22:37:37,722 INFO    MainThread:1515816 [wandb_init.py:init():621] calling init triggers
+2024-12-19 22:37:37,723 INFO    MainThread:1515816 [wandb_init.py:init():628] wandb.init called with sweep_config: {}
+config: {}
+2024-12-19 22:37:37,723 INFO    MainThread:1515816 [wandb_init.py:init():646] re-initializing run, found existing run on stack: wfsfw4e1
+2024-12-19 22:37:37,725 INFO    MainThread:1515816 [wandb_run.py:_finish():2158] finishing run 2032165508-aalto/avalanche_project/wfsfw4e1
+2024-12-19 22:37:37,726 INFO    MainThread:1515816 [wandb_run.py:_atexit_cleanup():2426] got exitcode: 0
+2024-12-19 22:37:37,726 INFO    MainThread:1515816 [wandb_run.py:_restore():2408] restore
+2024-12-19 22:37:37,727 INFO    MainThread:1515816 [wandb_run.py:_restore():2414] restore done
+2024-12-19 22:37:42,310 INFO    MainThread:1515816 [wandb_run.py:_footer_history_summary_info():3975] rendering history
+2024-12-19 22:37:42,310 INFO    MainThread:1515816 [wandb_run.py:_footer_history_summary_info():4007] rendering summary
+2024-12-19 22:37:42,330 INFO    MainThread:1515816 [wandb_run.py:_footer_sync_info():3934] logging synced files
+2024-12-19 22:37:42,342 INFO    MainThread:1515816 [wandb_init.py:init():671] starting backend
+2024-12-19 22:37:42,343 INFO    MainThread:1515816 [wandb_init.py:init():675] sending inform_init request
+2024-12-19 22:37:42,349 INFO    MainThread:1515816 [backend.py:_multiprocessing_setup():104] multiprocessing start_methods=fork,spawn,forkserver, using: spawn
+2024-12-19 22:37:42,349 INFO    MainThread:1515816 [wandb_init.py:init():688] backend started and connected
+2024-12-19 22:37:42,368 INFO    MainThread:1515816 [wandb_run.py:_label_probe_notebook():1342] probe notebook
+2024-12-19 22:37:42,368 INFO    MainThread:1515816 [wandb_run.py:_label_probe_notebook():1352] Unable to probe notebook: Expecting value: line 1 column 1 (char 0)
+2024-12-19 22:37:42,369 INFO    MainThread:1515816 [wandb_init.py:init():783] updated telemetry
+2024-12-19 22:37:42,382 INFO    MainThread:1515816 [wandb_init.py:init():816] communicating run to backend with 90.0 second timeout
+2024-12-19 22:37:42,650 INFO    MainThread:1515816 [wandb_init.py:init():867] starting run threads in backend
+2024-12-19 22:37:43,075 INFO    MainThread:1515816 [wandb_run.py:_console_start():2463] atexit reg
+2024-12-19 22:37:43,076 INFO    MainThread:1515816 [wandb_run.py:_redirect():2311] redirect: wrap_raw
+2024-12-19 22:37:43,076 INFO    MainThread:1515816 [wandb_run.py:_redirect():2376] Wrapping output streams.
+2024-12-19 22:37:43,076 INFO    MainThread:1515816 [wandb_run.py:_redirect():2401] Redirects installed.
+2024-12-19 22:37:43,077 INFO    MainThread:1515816 [wandb_init.py:init():911] run started, returning control to user process
+2024-12-19 22:37:43,506 INFO    MainThread:1515816 [jupyter.py:_save_ipynb():398] looking for notebook: /home/yangz2/code/quantum_cl/avalanche_logger.ipynb
+2024-12-19 22:37:43,727 INFO    MainThread:1515816 [wandb_init.py:_pause_backend():443] saved code: <Artifact source-avalanche_project-_home_yangz2_code_quantum_cl_avalanche_logger.ipynb>
+2024-12-19 22:37:43,727 INFO    MainThread:1515816 [wandb_init.py:_pause_backend():445] pausing backend
+2024-12-19 22:42:06,177 INFO    MainThread:1515816 [wandb_init.py:_resume_backend():450] resuming backend
+2024-12-19 22:42:52,832 INFO    MainThread:1515816 [jupyter.py:_save_ipynb():398] looking for notebook: /home/yangz2/code/quantum_cl/avalanche_logger.ipynb
+2024-12-19 22:42:53,065 INFO    MainThread:1515816 [wandb_init.py:_pause_backend():443] saved code: <Artifact source-avalanche_project-_home_yangz2_code_quantum_cl_avalanche_logger.ipynb>
+2024-12-19 22:42:53,065 INFO    MainThread:1515816 [wandb_init.py:_pause_backend():445] pausing backend
+2024-12-19 23:04:01,717 INFO    MainThread:1515816 [wandb_init.py:_resume_backend():450] resuming backend
+2024-12-19 23:04:01,730 INFO    MainThread:1515816 [jupyter.py:_save_ipynb():398] looking for notebook: /home/yangz2/code/quantum_cl/avalanche_logger.ipynb
+2024-12-19 23:04:02,012 INFO    MainThread:1515816 [wandb_init.py:_pause_backend():443] saved code: <Artifact source-avalanche_project-_home_yangz2_code_quantum_cl_avalanche_logger.ipynb>
+2024-12-19 23:04:02,013 INFO    MainThread:1515816 [wandb_init.py:_pause_backend():445] pausing backend
+2024-12-19 23:04:03,148 INFO    MainThread:1515816 [wandb_init.py:_resume_backend():450] resuming backend
+2024-12-19 23:04:03,158 INFO    MainThread:1515816 [jupyter.py:_save_ipynb():398] looking for notebook: /home/yangz2/code/quantum_cl/avalanche_logger.ipynb
+2024-12-19 23:04:03,440 INFO    MainThread:1515816 [wandb_init.py:_pause_backend():443] saved code: <Artifact source-avalanche_project-_home_yangz2_code_quantum_cl_avalanche_logger.ipynb>
+2024-12-19 23:04:03,440 INFO    MainThread:1515816 [wandb_init.py:_pause_backend():445] pausing backend
+2024-12-19 23:04:05,764 INFO    MainThread:1515816 [wandb_init.py:_resume_backend():450] resuming backend
+2024-12-19 23:04:05,777 INFO    MainThread:1515816 [jupyter.py:_save_ipynb():398] looking for notebook: /home/yangz2/code/quantum_cl/avalanche_logger.ipynb
+2024-12-19 23:04:06,065 INFO    MainThread:1515816 [wandb_init.py:_pause_backend():443] saved code: <Artifact source-avalanche_project-_home_yangz2_code_quantum_cl_avalanche_logger.ipynb>
+2024-12-19 23:04:06,066 INFO    MainThread:1515816 [wandb_init.py:_pause_backend():445] pausing backend
+2024-12-19 23:04:07,930 INFO    MainThread:1515816 [wandb_init.py:_resume_backend():450] resuming backend
+2024-12-19 23:04:07,941 INFO    MainThread:1515816 [jupyter.py:_save_ipynb():398] looking for notebook: /home/yangz2/code/quantum_cl/avalanche_logger.ipynb
+2024-12-19 23:04:08,226 INFO    MainThread:1515816 [wandb_init.py:_pause_backend():443] saved code: <Artifact source-avalanche_project-_home_yangz2_code_quantum_cl_avalanche_logger.ipynb>
+2024-12-19 23:04:08,226 INFO    MainThread:1515816 [wandb_init.py:_pause_backend():445] pausing backend
+2024-12-19 23:04:11,796 INFO    MainThread:1515816 [wandb_init.py:_resume_backend():450] resuming backend
+2024-12-19 23:04:11,806 INFO    MainThread:1515816 [jupyter.py:_save_ipynb():398] looking for notebook: /home/yangz2/code/quantum_cl/avalanche_logger.ipynb
+2024-12-19 23:04:12,088 INFO    MainThread:1515816 [wandb_init.py:_pause_backend():443] saved code: <Artifact source-avalanche_project-_home_yangz2_code_quantum_cl_avalanche_logger.ipynb>
+2024-12-19 23:04:12,088 INFO    MainThread:1515816 [wandb_init.py:_pause_backend():445] pausing backend
+2024-12-19 23:04:12,111 INFO    MainThread:1515816 [wandb_init.py:_resume_backend():450] resuming backend
+2024-12-19 23:04:12,119 INFO    MainThread:1515816 [jupyter.py:_save_ipynb():398] looking for notebook: /home/yangz2/code/quantum_cl/avalanche_logger.ipynb
+2024-12-19 23:04:12,400 INFO    MainThread:1515816 [wandb_init.py:_pause_backend():443] saved code: <Artifact source-avalanche_project-_home_yangz2_code_quantum_cl_avalanche_logger.ipynb>
+2024-12-19 23:04:12,400 INFO    MainThread:1515816 [wandb_init.py:_pause_backend():445] pausing backend
+2024-12-19 23:04:12,790 INFO    MainThread:1515816 [wandb_init.py:_resume_backend():450] resuming backend
+2024-12-19 23:04:12,798 INFO    MainThread:1515816 [jupyter.py:_save_ipynb():398] looking for notebook: /home/yangz2/code/quantum_cl/avalanche_logger.ipynb
+2024-12-19 23:04:13,074 INFO    MainThread:1515816 [wandb_init.py:_pause_backend():443] saved code: <Artifact source-avalanche_project-_home_yangz2_code_quantum_cl_avalanche_logger.ipynb>
+2024-12-19 23:04:13,074 INFO    MainThread:1515816 [wandb_init.py:_pause_backend():445] pausing backend
+2024-12-19 23:04:13,453 INFO    MainThread:1515816 [wandb_init.py:_resume_backend():450] resuming backend
+2024-12-19 23:04:13,462 INFO    MainThread:1515816 [jupyter.py:_save_ipynb():398] looking for notebook: /home/yangz2/code/quantum_cl/avalanche_logger.ipynb
+2024-12-19 23:04:13,745 INFO    MainThread:1515816 [wandb_init.py:_pause_backend():443] saved code: <Artifact source-avalanche_project-_home_yangz2_code_quantum_cl_avalanche_logger.ipynb>
+2024-12-19 23:04:13,746 INFO    MainThread:1515816 [wandb_init.py:_pause_backend():445] pausing backend
