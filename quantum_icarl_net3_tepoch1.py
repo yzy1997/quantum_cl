@@ -73,7 +73,7 @@ start_time = time.time()    # Start of the computation time
 
 
 dev = qml.device("lightning.gpu", wires=n_qubits)
-device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 # device = torch.device("cpu")
 
 
@@ -473,7 +473,7 @@ for param in model_hybrid.parameters():
 
 feature_extractor = nn.Sequential(*list(model_hybrid.children())[:-1], nn.Flatten()).to(device)
 # Notice that model_hybrid.fc is the last layer of ResNet18
-model_hybrid.fc = DressedQuantumNet()
+model_hybrid.fc = DressedQuantumNet().to(device)
 classifier = model_hybrid.fc.to(device)
 # model_hybrid.fc = nn.Linear(512, 200)
 
