@@ -45,7 +45,8 @@ import warnings
 warnings.filterwarnings("ignore", category=UserWarning, module="pennylane.math.utils")
 
 # OpenMP: number of parallel threads.
-os.environ["OMP_NUM_THREADS"] = "1"
+# os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 np.random.seed(42)
 
 
@@ -72,7 +73,7 @@ start_time = time.time()    # Start of the computation time
 # In[10]:
 
 
-dev = qml.device("lightning.gpu", wires=n_qubits)
+dev = qml.device("lightning.qubit", wires=n_qubits)
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 # device = torch.device("cpu")
 
