@@ -72,8 +72,8 @@ start_time = time.time()    # Start of the computation time
 # In[10]:
 
 
-dev = qml.device("lightning.qubit", wires=n_qubits)
-device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+dev = qml.device("lightning.gpu", wires=n_qubits)
+device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
 # device = torch.device("cpu")
 
 
