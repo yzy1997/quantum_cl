@@ -557,7 +557,7 @@ with open('quantum_lwf_net1_results.txt', 'a') as f:
 
 log_dir = "./net2_logs"
 writer = SummaryWriter(log_dir=log_dir)
-get_ipython().run_line_magic('load_ext', 'tensorboard')
+# get_ipython().run_line_magic('load_ext', 'tensorboard')
 
 
 # In[ ]:

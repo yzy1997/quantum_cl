@@ -609,7 +609,7 @@ with open('quantum_lwf_net1_results.txt', 'a') as f:
 # In[ ]:
 
 
-get_ipython().run_line_magic('load_ext', 'tensorboard')
+# get_ipython().run_line_magic('load_ext', 'tensorboard')
 
 
 # In[41]:
