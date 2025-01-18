@@ -621,7 +621,7 @@ with open("results/list/CIFAR100_ICaRL_qml_net3_qbit12_qdepth10_tepoch1.pkl", "w
 
 # 从文件加载
 import pickle
-with open("results/list/CIFAR100_ICaRL_qml_net3_qbit12_qdepth10_tepoch1", "rb") as f:
+with open("results/list/CIFAR100_ICaRL_qml_net3_qbit12_qdepth10_tepoch1.pkl", "rb") as f:
     results = pickle.load(f)  
 
 
