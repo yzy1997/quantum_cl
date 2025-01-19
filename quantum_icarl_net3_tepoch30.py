@@ -55,8 +55,8 @@ np.random.seed(42)
 n_qubits = 4                # Number of qubits
 step = 0.0004               # Learning rate
 batch_size = 64              # Number of samples for each training step
-num_epochs = 30             # Number of training epochs
-num_experiences = 10        # Number of experiences
+num_epochs = 10             # Number of training epochs
+num_experiences = 30        # Number of experiences
 num_classes = 200            # Number of classes in the dataset
 train_mb_size= 256            # Number of samples for each training step
 eval_mb_size=100            # Number of samples for each evaluation step
