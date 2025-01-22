@@ -57,7 +57,7 @@ np.random.seed(42)
 n_qubits = 12                # Number of qubits
 step = 0.0004               # Learning rate
 batch_size = 64              # Number of samples for each training step
-num_epochs = 1             # Number of training epochs
+num_epochs = 5             # Number of training epochs
 num_experiences = 10        # Number of experiences
 num_classes = 200            # Number of classes in the dataset
 train_mb_size= 256            # Number of samples for each training step
@@ -612,7 +612,7 @@ for experience in benchmark.train_stream:
 import pickle
 
 # 存储到文件
-with open("results/list/CIFAR100_ICaRL_qml_net3_qbit12_qdepth10_tepoch1.pkl", "wb") as f:
+with open("results/list/CIFAR100_ICaRL_qml_net3_qbit12_qdepth10_tepoch5.pkl", "wb") as f:
     pickle.dump(results, f)  
 
 
@@ -621,7 +621,7 @@ with open("results/list/CIFAR100_ICaRL_qml_net3_qbit12_qdepth10_tepoch1.pkl", "w
 
 # 从文件加载
 import pickle
-with open("results/list/CIFAR100_ICaRL_qml_net3_qbit12_qdepth10_tepoch1.pkl", "rb") as f:
+with open("results/list/CIFAR100_ICaRL_qml_net3_qbit12_qdepth10_tepoch5.pkl", "rb") as f:
     results = pickle.load(f)  
 
 
@@ -668,14 +668,14 @@ for train_idx, result in enumerate(results):  # 遍历5次训练的结果
 # 绘制图形
 plt.figure(figsize=(20, 6))
 plt.plot(x, loss_values, marker='o', linestyle='-', color='b', label='Loss_Exp')
-plt.title("Loss over 20 Evaluations After 5 Training Phases")
+plt.title("Loss over n_experience**2 Evaluations After n_experience Training Phases")
 plt.xlabel("Evaluation Index")
 plt.ylabel("Loss Value")
 plt.xticks(range(1, len(x) + 1))  # 设置 x 轴刻度
 plt.grid(True)
 plt.legend()
 plt.tight_layout()
-plt.savefig("results/figs/CIFAR100_ICaRL_qml_net3_qbit12_qdepth10_tepoch1_loss.png")
+plt.savefig("results/figs/CIFAR100_ICaRL_qml_net3_qbit12_qdepth10_tepoch5_loss.png")
 
 plt.figure(figsize=(20, 6))
 plt.plot(x, top1_acc_values, marker='o', linestyle='-', color='r', label='Top1_Acc_Exp')
@@ -686,16 +686,16 @@ plt.xticks(range(1, len(x) + 1))  # 设置 x 轴刻度
 plt.grid(True)
 plt.legend()
 plt.tight_layout()
-plt.savefig("results/figs/CIFAR100_ICaRL_qml_net3_qbit12_qdepth10_tepoch1_acc.png")
+plt.savefig("results/figs/CIFAR100_ICaRL_qml_net3_qbit12_qdepth10_tepoch5_acc.png")
 
 plt.figure(figsize=(20, 6))
 plt.plot(range(1, len(forgetting_values) + 1), forgetting_values, marker='o', linestyle='-', color='g', label='StreamForgetting')
-plt.title("StreamForgetting over 20 Evaluations After 5 Training Phases")
+plt.title("StreamForgetting n_experience**2 Evaluations After n_experience Training Phases")
 plt.xlabel("Evaluation Index")
 plt.ylabel("StreamForgetting Value")
 plt.xticks(range(1, len(forgetting_values) + 1))  # 设置 x 轴刻度
 plt.grid(True)
 plt.legend()
 plt.tight_layout()
-plt.savefig("results/figs/CIFAR100_ICaRL_qml_net3_qbit12_qdepth10_tepoch1_forget.png")
+plt.savefig("results/figs/CIFAR100_ICaRL_qml_net3_qbit12_qdepth10_tepoch5_forget.png")
 
