@@ -698,4 +698,3 @@ plt.grid(True)
 plt.legend()
 plt.tight_layout()
 plt.savefig("results/figs/CIFAR100_ICaRL_qml_net3_qbit12_qdepth10_tepoch5_forget.png")
-
