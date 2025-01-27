@@ -6,6 +6,8 @@ from torchvision import transforms # 用于数据预处理
 from torchvision.transforms import Normalize, Compose, ToTensor
 from avalanche.benchmarks.classic import SplitCIFAR100
 from avalanche.training import ICaRL
+from avalanche.training.supervised import GDumb
+from avalanche.training.storage_policy import ReservoirSamplingBuffer
 from avalanche.training.plugins import EvaluationPlugin
 from avalanche.evaluation.metrics import accuracy_metrics, loss_metrics, forgetting_metrics
 from avalanche.logging import InteractiveLogger
@@ -58,19 +60,32 @@ eval_plugin = EvaluationPlugin(
     loggers=[InteractiveLogger()]
 )
 
-# 定义 ICaRL 策略
-strategy = ICaRL(
-    feature_extractor=feature_extractor,
-    classifier=classifier,
-    optimizer=optimizer,
-    memory_size=2000,  # 存储池大小
-    train_mb_size=64,
-    eval_mb_size=64,
+# # 定义 ICaRL 策略
+# strategy = ICaRL(
+#     feature_extractor=feature_extractor,
+#     classifier=classifier,
+#     optimizer=optimizer,
+#     memory_size=2000,  # 存储池大小
+#     train_mb_size=64,
+#     eval_mb_size=64,
+#     train_epochs=1,
+#     device="cuda" if torch.cuda.is_available() else "cpu",
+#     evaluator=eval_plugin,
+#     buffer_transform=buffer_transform,  # 使用适合张量的标准化函数
+#     fixed_memory=False
+# )
+
+buffer_size = 2000  # 固定缓冲区大小
+storage_policy = ReservoirSamplingBuffer(max_size=buffer_size)
+
+strategy = GDumb(
+    model=resnet_model,
+    optimizer=torch.optim.SGD(resnet_model.parameters(), lr=0.01, momentum=0.9),
+    storage_policy=storage_policy,
+    train_mb_size=32,
     train_epochs=1,
-    device="cuda" if torch.cuda.is_available() else "cpu",
-    evaluator=eval_plugin,
-    buffer_transform=buffer_transform,  # 使用适合张量的标准化函数
-    fixed_memory=False
+    eval_mb_size=32,
+    evaluator=eval_plugin
 )
 
 # 训练和评估
