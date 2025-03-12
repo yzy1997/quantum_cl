@@ -10787,3 +10787,15 @@ Epoch 4 ended.
 	Loss_Stream/eval_phase/test_stream/Task000 = 0.3448
 	StreamForgetting/eval_phase/test_stream = 0.1600
 	Top1_Acc_Stream/eval_phase/test_stream/Task000 = 0.2816
+-- >> Start of training phase << --
+-- Starting training on experience 0 (Task 0) from train stream --
+-- >> Start of training phase << --
+-- Starting training on experience 0 (Task 0) from train stream --
+-- >> Start of training phase << --
+-- Starting training on experience 0 (Task 0) from train stream --
+-- >> Start of training phase << --
+-- Starting training on experience 0 (Task 0) from train stream --
+-- >> Start of training phase << --
+-- Starting training on experience 0 (Task 0) from train stream --
+-- >> Start of training phase << --
+-- Starting training on experience 0 (Task 0) from train stream --

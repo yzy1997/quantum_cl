@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[8]:
+# In[93]:
 
 
 import os
@@ -40,17 +40,19 @@ import matplotlib.pyplot as plt
 # Pennylane
 import pennylane as qml
 from pennylane import numpy as np
+import pennylane_lightning
 
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning, module="pennylane.math.utils")
 
+os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
+
 # OpenMP: number of parallel threads.
 # os.environ["OMP_NUM_THREADS"] = "1"
-os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 np.random.seed(42)
 
 
-# In[9]:
+# In[ ]:
 
 
 n_qubits = 4                # Number of qubits
@@ -70,15 +72,15 @@ temperature=2.0             # temperature for the distillation loss
 start_time = time.time()    # Start of the computation time
 
 
-# In[10]:
+# In[ ]:
 
 
-dev = qml.device("lightning.qubit", wires=n_qubits)
+dev = qml.device("lightning.gpu", wires=n_qubits)
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 # device = torch.device("cpu")
 
 
-# In[7]:
+# In[67]:
 
 
 # 1. Download Tiny ImageNet dataset and extract it
@@ -136,7 +138,7 @@ device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 # organize_val_images(val_dir, val_images_dir, val_annotations_file)
 
 
-# In[8]:
+# In[143]:
 
 
 # 2. Define transformations and load Tiny ImageNet data using ImageFolder
@@ -151,7 +153,7 @@ device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 # val_dataset = ImageFolder(root=os.path.join(tiny_imagenet_dir, 'val'), transform=transform)
 
 
-# In[9]:
+# In[144]:
 
 
 # 3. 将 train_dataset 分为 num_experiences 个 experience
@@ -168,14 +170,14 @@ device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 # )
 
 
-# In[103]:
+# In[145]:
 
 
 # labels = [label for _, label in train_dataset]
 # print(f"Min label: {min(labels)}, Max label: {max(labels)}")
 
 
-# In[11]:
+# In[68]:
 
 
 # 2. Define transformations and load Tiny ImageNet data using ImageFolder
@@ -200,7 +202,7 @@ benchmark = SplitCIFAR100(
 )
 
 
-# In[15]:
+# In[69]:
 
 
 def H_layer(nqubits):
@@ -209,6 +211,11 @@ def H_layer(nqubits):
     for idx in range(nqubits):
         qml.Hadamard(wires=idx)
 
+def RX_layer(w):
+    """Layer of parametrized qubit rotations around the x axis.
+    """
+    for idx, element in enumerate(w):
+        qml.RX(element, wires=idx)
 
 def RY_layer(w):
     """Layer of parametrized qubit rotations around the y axis.
@@ -229,7 +236,7 @@ def entangling_layer(nqubits):
         qml.CNOT(wires=[i, i + 1])
 
 
-# In[31]:
+# In[70]:
 
 
 @qml.qnode(dev)
@@ -245,7 +252,7 @@ def quantum_net(q_input_features, q_weights_flat):
     H_layer(n_qubits)
 
     # Embed features in the quantum node
-    RY_layer(q_input_features)
+    RX_layer(q_input_features)
 
     # Sequence of trainable variational layers
     for k in range(q_depth):
@@ -261,7 +268,7 @@ fig, ax = qml.draw_mpl(quantum_net)(torch.randn(n_qubits, q_depth), q_delta * to
 plt.show()
 
 
-# In[17]:
+# In[71]:
 
 
 def U3_layer(nqubits):
@@ -282,7 +289,7 @@ def entangline_layer_2(nqubits):
         qml.Toffoli(wires=[i, i + 1, i + 2])
 
 
-# In[14]:
+# In[72]:
 
 
 @qml.qnode(dev)
@@ -314,7 +321,7 @@ fig, ax = qml.draw_mpl(quantum_net_2)(torch.randn(n_qubits, q_depth), q_delta * 
 plt.show()
 
 
-# In[18]:
+# In[73]:
 
 
 def phase_layer(w):
@@ -360,39 +367,34 @@ def measurement_layer(nqubits):
     return [qml.expval(qml.PauliZ(i)) for i in range(nqubits)]
 
 
-# In[19]:
+# In[106]:
 
 
-@qml.qnode(dev, diff_method="parameter-shift")
+@qml.qnode(dev, interface="torch", diff_method="parameter-shift")
 def quantum_net_3(q_input_features, q_weights_flat):
-    """
-    The variational quantum circuit.
-    """
+    # 确保 q_weights_flat 是 Tensor
+    if not isinstance(q_weights_flat, torch.Tensor):
+        q_weights_flat = torch.tensor(q_weights_flat, dtype=torch.float32, requires_grad=True)
 
-    # Reshape weights
     q_weights = q_weights_flat.reshape(q_depth, n_qubits)
 
-    # Start from state |+> , unbiased w.r.t. |0> and |1>
     H_layer(n_qubits)
     RY_layer(q_input_features)
 
-
-    # Sequence of trainable variational layers
     for _ in range(q_depth):
         U3_layer(n_qubits)
         phase_layer(n_qubits)
         entangling_layer_3(n_qubits)
-        
-    exp_val = measurement_layer(n_qubits)
-    # Measurement layer
-    return tuple(exp_val)
+
+    exp_val = [qml.expval(qml.PauliZ(position)) for position in range(n_qubits)]
+    return exp_val
 
 qml.drawer.use_style("pennylane")
 fig, ax = qml.draw_mpl(quantum_net_3)(torch.randn(n_qubits, q_depth), q_delta * torch.randn(q_depth * n_qubits))
 plt.show()
 
 
-# In[21]:
+# In[107]:
 
 
 @qml.qnode(dev)
@@ -406,7 +408,6 @@ def quantum_net_4(q_input_features, q_weights_flat):
 
     # Start from state |+> , unbiased w.r.t. |0> and |1>
     H_layer(n_qubits)
-    RY_layer(q_input_features)
 
 
     # Sequence of trainable variational layers
@@ -425,7 +426,7 @@ fig, ax = qml.draw_mpl(quantum_net_4)(torch.randn(n_qubits, q_depth), q_delta * 
 plt.show()
 
 
-# In[23]:
+# In[108]:
 
 
 class DressedQuantumNet(nn.Module):
@@ -440,7 +441,7 @@ class DressedQuantumNet(nn.Module):
 
         super().__init__()
         self.pre_net = nn.Linear(512, n_qubits)
-        self.q_params = nn.Parameter(q_delta * torch.randn(q_depth * n_qubits))
+        self.q_params = torch.nn.Parameter(q_delta * torch.randn(q_depth * n_qubits, requires_grad=True))
         self.post_net = nn.Linear(n_qubits, num_classes)
 
     def forward(self, input_features):
@@ -455,17 +456,17 @@ class DressedQuantumNet(nn.Module):
         q_in = torch.tanh(pre_out) * np.pi / 2.0
 
         # Apply the quantum circuit to each element of the batch and append to q_out
-        q_out = torch.Tensor(0, n_qubits)
+        q_out = torch.empty((0, n_qubits), device=device, dtype=torch.float32, requires_grad=True)
         q_out = q_out.to(device)
         for elem in q_in:
-            q_out_elem = torch.hstack(quantum_net_3(elem, self.q_params)).float().unsqueeze(0)
-            q_out = torch.cat((q_out, q_out_elem.to(device)))
+            q_out_elem = torch.hstack(quantum_net(elem, self.q_params)).float().unsqueeze(0)
+            q_out = torch.cat((q_out, q_out_elem), dim=0).requires_grad_(True)
 
         # return the two-dimensional prediction from the postprocessing layer
         return self.post_net(q_out)
 
 
-# In[24]:
+# In[109]:
 
 
 weights = torchvision.models.ResNet18_Weights.IMAGENET1K_V1
@@ -476,21 +477,21 @@ for param in model_hybrid.parameters():
 
 feature_extractor = nn.Sequential(*list(model_hybrid.children())[:-1], nn.Flatten()).to(device)
 # Notice that model_hybrid.fc is the last layer of ResNet18
-model_hybrid.fc = DressedQuantumNet().to(device).requires_grad_(True)
-classifier = model_hybrid.fc.to(device).requires_grad_(True)
+model_hybrid.fc = DressedQuantumNet().to(device)
+classifier = model_hybrid.fc.to(device)
 # model_hybrid.fc = nn.Linear(512, 200)
 
 # Use CUDA or CPU according to the "device" object.
-model_hybrid = model_hybrid.to(device).requires_grad_(True)
+model_hybrid = model_hybrid.to(device)
 
 
-# In[ ]:
+# In[156]:
 
 
 #### This part I should add new network like CNN
 
 
-# In[34]:
+# In[157]:
 
 
 # from torch.utils.data import DataLoader
@@ -508,7 +509,7 @@ model_hybrid = model_hybrid.to(device).requires_grad_(True)
 # print(f"Model output shape: {outputs.shape}")  # 应该是 [batch_size, 200]
 
 
-# In[25]:
+# In[110]:
 
 
 criterion = nn.CrossEntropyLoss()
@@ -522,14 +523,14 @@ loggers = []
 loggers.append(TensorboardLogger())
 
 # log to text file
-loggers.append(TextLogger(open('quantum_lwf_net1_log.txt', 'a')))
+loggers.append(TextLogger(open('quantum_lwf_net3_log.txt', 'a')))
 
 # print to stdout
 loggers.append(InteractiveLogger())
 
 
 
-# In[26]:
+# In[111]:
 
 
 # 7. Define evaluation plugin for logging metrics
@@ -546,7 +547,7 @@ eval_plugin = EvaluationPlugin(
 )
 
 
-# In[27]:
+# In[112]:
 
 
 strategy = LwF(
@@ -563,7 +564,7 @@ strategy = LwF(
 )
 
 
-# In[28]:
+# In[113]:
 
 
 from avalanche.training import ICaRL
@@ -584,7 +585,7 @@ strategy = ICaRL(
 )
 
 
-# In[ ]:
+# In[114]:
 
 
 # 9. Training and evaluation loop
@@ -599,28 +600,21 @@ for experience in benchmark.train_stream:
     print(f"Evaluation on the current experience: {experience.current_experience}")
     # Evaluate the current model on the current test experience
     results.append(strategy.eval(benchmark.test_stream))
-# 将结果保存到文件
-if not os.path.exists('quantum_lwf_net1_results.txt'):
-    with open('quantum_lwf_net1_results.txt', 'w') as f:
-        f.write('Results of quantum_lwf_net1\n')
-with open('quantum_lwf_net1_results.txt', 'a') as f:
-    for res in results:
-        f.write(str(res) + '\n')
 
 
 # In[ ]:
 
 
-# get_ipython().run_line_magic('load_ext', 'tensorboard')
+get_ipython().run_line_magic('load_ext', 'tensorboard')
 
 
-# In[41]:
+# In[ ]:
 
 
 import pickle
 
 # 存储到文件
-with open("results/list/CIFAR100_ICaRL_qml_net3_qbit4_qdepth4_tepoch1.pkl", "wb") as f:
+with open("results/list/CIFAR100_ICaRL_qml_net1_qbit4_qdepth4_tepoch1.pkl", "wb") as f:
     pickle.dump(results, f)  
 
 
@@ -633,7 +627,7 @@ with open("results/list/CIFAR100_ICaRL_qml_net3_qbit4_qdepth4_tepoch1.pkl", "rb"
     results = pickle.load(f)  
 
 
-# In[7]:
+# In[ ]:
 
 
 import matplotlib.pyplot as plt
@@ -676,7 +670,7 @@ for train_idx, result in enumerate(results):  # 遍历5次训练的结果
 # 绘制图形
 plt.figure(figsize=(20, 6))
 plt.plot(x, loss_values, marker='o', linestyle='-', color='b', label='Loss_Exp')
-plt.title("Loss over 20 Evaluations After 5 Training Phases")
+plt.title("Loss over n_experience**2 Evaluations After n_experience Training Phases")
 plt.xlabel("Evaluation Index")
 plt.ylabel("Loss Value")
 plt.xticks(range(1, len(x) + 1))  # 设置 x 轴刻度
@@ -698,7 +692,7 @@ plt.savefig("results/figs/CIFAR100_ICaRL_qml_net3_qbit4_qdepth4_tepoch1_acc.png"
 
 plt.figure(figsize=(20, 6))
 plt.plot(range(1, len(forgetting_values) + 1), forgetting_values, marker='o', linestyle='-', color='g', label='StreamForgetting')
-plt.title("StreamForgetting over 20 Evaluations After 5 Training Phases")
+plt.title("StreamForgetting over n_experience**2 Evaluations After n_experience Training Phases")
 plt.xlabel("Evaluation Index")
 plt.ylabel("StreamForgetting Value")
 plt.xticks(range(1, len(forgetting_values) + 1))  # 设置 x 轴刻度
