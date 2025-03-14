@@ -605,7 +605,7 @@ for experience in benchmark.train_stream:
 # In[ ]:
 
 
-get_ipython().run_line_magic('load_ext', 'tensorboard')
+# get_ipython().run_line_magic('load_ext', 'tensorboard')
 
 
 # In[ ]:
