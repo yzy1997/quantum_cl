@@ -614,7 +614,7 @@ for experience in benchmark.train_stream:
 import pickle
 
 # 存储到文件
-with open("results/list/CIFAR100_ICaRL_qml_net1_qbit4_qdepth4_tepoch10.pkl", "wb") as f:
+with open("results/list/CIFAR100_ICaRL_qml_net3_qbit4_qdepth4_tepoch10.pkl", "wb") as f:
     pickle.dump(results, f)  
 
 
