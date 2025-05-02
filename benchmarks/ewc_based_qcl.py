@@ -143,9 +143,9 @@ class QuantumClassifier(nn.Module):
         super().__init__()
         self.q_layer = qlayer
         self.output = nn.Linear(1, 10)
-        nn.init.xavier_uniform_(self.output.weight)
 
     def forward(self, x):
+        x = F.normalize(x, p=2, dim=1)  # ➜ 每个样本 L2 归一化
         x = self.q_layer(x)
         if len(x.shape) == 1:
             x = x.unsqueeze(1)
@@ -159,6 +159,7 @@ class QuantumClassifier(nn.Module):
 
 # -----------------------------
 # 3. Data Transform (Only 8 pixels used)
+# -----------------------------
 transform = transforms.Compose([
     transforms.Lambda(lambda x: x.view(-1)),  # 展平为 784
     transforms.Lambda(lambda x: F.pad(x, (0, 256 - 784))) if 784 < 256 else transforms.Lambda(lambda x: x[:256]),
