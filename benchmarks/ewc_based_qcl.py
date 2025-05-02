@@ -1,6 +1,77 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+# In[ ]:
+
+
+# import torch
+# import torch.nn as nn
+# import torch.optim as optim
+# import matplotlib.pyplot as plt
+# from avalanche.benchmarks import SplitMNIST
+# from avalanche.models import SimpleMLP
+# from avalanche.training import EWC
+# from avalanche.training.plugins import EvaluationPlugin
+# from avalanche.evaluation.metrics import accuracy_metrics
+# from avalanche.logging import InteractiveLogger
+
+# # 设置设备
+# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+# # SplitMNIST 数据集
+# benchmark = SplitMNIST(n_experiences=5, return_task_id=False)
+
+# # 模型、优化器、损失函数
+# model = SimpleMLP(num_classes=10)
+# optimizer = optim.SGD(model.parameters(), lr=0.01)
+# criterion = nn.CrossEntropyLoss()
+
+# # 日志器和评估器
+# interactive_logger = InteractiveLogger()
+
+# eval_plugin = EvaluationPlugin(
+#     accuracy_metrics(stream=True),
+#     loggers=[interactive_logger]
+# )
+
+# strategy = EWC(
+#     model=model,
+#     optimizer=optimizer,
+#     criterion=criterion,
+#     ewc_lambda=0.4,
+#     train_epochs=40,
+#     device=device,
+#     evaluator=eval_plugin
+# )
+
+# # 📌 用于记录每个任务的准确率
+# task_accuracies = []
+
+# # 开始训练每个 experience
+# for experience in benchmark.train_stream:
+#     print(f"\n--- Training on experience {experience.current_experience} ---")
+#     strategy.train(experience)
+
+#     print("--- Evaluating on test stream ---")
+#     results = strategy.eval(benchmark.test_stream)
+
+#     # 提取并记录 accuracy
+#     acc = results['Top1_Acc_Stream/eval_phase/test_stream']
+#     task_accuracies.append(acc)
+
+# # ✅ 绘图
+# plt.figure(figsize=(8, 5))
+# plt.plot(range(1, len(task_accuracies) + 1), task_accuracies, marker='o')
+# plt.title("EWC on SplitMNIST")
+# plt.xlabel("Task (experience)")
+# plt.ylabel("Test Accuracy")
+# plt.grid(True)
+# plt.savefig("ewc_mnist_accuracy_plot.png")
+# plt.show()
+
+
+# In[5]:
+
 
 import torch
 import torch.nn as nn
@@ -21,7 +92,7 @@ from avalanche.logging import InteractiveLogger
 import pickle
 
 
-# In[17]:
+# In[ ]:
 
 
 # -----------------------------
@@ -74,14 +145,14 @@ class QuantumClassifier(nn.Module):
         self.output = nn.Linear(1, 10)
 
     def forward(self, x):
-        x = self.q_layer(x)  # 输出可能是 [batch_size] 或 [batch_size, 1]
+        x = self.q_layer(x)
         if len(x.shape) == 1:
-            x = x.unsqueeze(1)  # 变为 [batch_size, 1]
+            x = x.unsqueeze(1)
         x = self.output(x)
         return F.log_softmax(x, dim=1)
 
 
-# In[18]:
+# In[ ]:
 
 
 # -----------------------------
@@ -135,7 +206,7 @@ for experience in benchmark.train_stream:
     print("--- Evaluating on test stream ---")
     results = strategy.eval(benchmark.test_stream)
 
-    acc = results['Top1_Acc_Stream/eval_phase/test_stream']
+    acc = results['Top1_Acc_Stream/eval_phase/test_stream/Task000']
     task_accuracies.append(acc)
     
 
