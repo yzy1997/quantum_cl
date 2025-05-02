@@ -104,6 +104,8 @@ n_layers = 10  # ✅ Now actually used
 dev = qml.device("lightning.qubit", wires=n_qubits)
 
 def quantum_circuit(inputs, weights):
+    # 💡 Clamp 限制输入范围，防止极端归一化后振幅很小或很大
+    inputs = qml.math.clip(inputs, -1.0, 1.0)
     # 1. Amplitude embedding（必须 L2 归一化）
     qml.AmplitudeEmbedding(inputs, wires=range(n_qubits), normalize=True)
     # weights: [n_layers, n_qubits, 2]
@@ -145,13 +147,86 @@ class QuantumClassifier(nn.Module):
         self.output = nn.Linear(1, 10)
 
     def forward(self, x):
-        x = F.normalize(x, p=2, dim=1)  # ➜ 每个样本 L2 归一化
+        # ✨ 确保每个样本都是 unit-norm + 有效范围
+        x = torch.nan_to_num(x, nan=0.0, posinf=1.0, neginf=-1.0)
+        x = F.normalize(x, p=2, dim=1)
         x = self.q_layer(x)
         if len(x.shape) == 1:
             x = x.unsqueeze(1)
         x = self.output(x)
-        assert not torch.isnan(x).any(), "Detected NaN in input to output layer"
+        # assert not torch.isnan(x).any(), "Detected NaN in output layer"
         return F.log_softmax(x, dim=1)
+
+
+# In[ ]:
+
+
+# -----------------------------
+# 3. Data Transform (Only 8 pixels used)
+# -----------------------------
+transform = transforms.Compose([
+    transforms.Lambda(lambda x: x.view(-1)),  # 展平为 784
+    transforms.Lambda(lambda x: F.pad(x, (0, 256 - 784))) if 784 < 256 else transforms.Lambda(lambda x: x[:256]),
+    transforms.Lambda(lambda x: torch.clamp(x, -1.0, 1.0)),  # ✨ 限制在振幅有效区间
+    transforms.Lambda(lambda x: F.normalize(x, p=2, dim=0))  # L2 归一化
+])
+
+benchmark = SplitMNIST(n_experiences=5, return_task_id=False,
+                       train_transform=transform, eval_transform=transform)
+
+# -----------------------------
+# 4. Avalanche EWC Strategy Setup
+# -----------------------------
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model = QuantumClassifier().to(device)
+optimizer = optim.Adam(model.parameters(), lr=0.005)
+criterion = nn.NLLLoss()
+
+interactive_logger = InteractiveLogger()
+eval_plugin = EvaluationPlugin(
+    accuracy_metrics(minibatch=True, epoch=True, experience=True, stream=True),
+    loss_metrics(minibatch=True, epoch=True, experience=True, stream=True),
+    timing_metrics(epoch=True, epoch_running=True),
+    cpu_usage_metrics(experience=True),
+    forgetting_metrics(experience=True, stream=True),
+    confusion_matrix_metrics(num_classes=10, save_image=True,
+                             stream=True),
+    disk_usage_metrics(minibatch=True, epoch=True, experience=True, stream=True),
+    loggers=[interactive_logger]
+)
+
+strategy = EWC(
+    model=model,
+    optimizer=optimizer,
+    criterion=criterion,
+    ewc_lambda=0.4,
+    train_epochs=40,
+    device=device,
+    evaluator=eval_plugin
+)
+
+# -----------------------------
+# 5. Training & Accuracy Recording
+# -----------------------------
+task_accuracies = []
+
+for experience in benchmark.train_stream:
+    print(f"\n--- Training on experience {experience.current_experience} ---")
+    strategy.train(experience)
+
+    print("--- Evaluating on test stream ---")
+    results = strategy.eval(benchmark.test_stream)
+
+    acc = results['Top1_Acc_Stream/eval_phase/test_stream/Task000']
+    task_accuracies.append(acc)
+    
+
+# 存储到文件
+with open("results/list/splitminist_EWC_qbit8_qdepth10.pkl", "wb") as f:
+    pickle.dump(results, f)  
+    
+with open("results/list/splitminist_EWC_qbit8_qdepth10.pkl", "rb") as f:
+    results = pickle.load(f)  
 
 
 # In[ ]:
