@@ -70,7 +70,7 @@
 # plt.show()
 
 
-# In[5]:
+# In[9]:
 
 
 import torch
@@ -84,7 +84,7 @@ from torchvision import transforms
 
 from avalanche.benchmarks.classic import SplitMNIST
 from avalanche.training import EWC
-from avalanche.training.plugins import EvaluationPlugin
+from avalanche.training.plugins import EvaluationPlugin,SupervisedPlugin
 from avalanche.evaluation.metrics import forgetting_metrics, \
 accuracy_metrics, loss_metrics, timing_metrics, cpu_usage_metrics, \
 confusion_matrix_metrics, disk_usage_metrics
@@ -139,6 +139,8 @@ plt.show()
 weight_shapes = {"weights": (n_layers, n_qubits, 2)}
 qnode = qml.QNode(quantum_circuit, dev, interface="torch")
 qlayer = TorchLayer(qnode, weight_shapes)
+with torch.no_grad():
+    qlayer.weights.data = qlayer.weights.data * 0.1
 
 class QuantumClassifier(nn.Module):
     def __init__(self):
@@ -147,14 +149,12 @@ class QuantumClassifier(nn.Module):
         self.output = nn.Linear(1, 10)
 
     def forward(self, x):
-        # ✨ 确保每个样本都是 unit-norm + 有效范围
         x = torch.nan_to_num(x, nan=0.0, posinf=1.0, neginf=-1.0)
-        x = F.normalize(x, p=2, dim=1)
+        # 添加epsilon并确保归一化维度正确
+        x = F.normalize(x + 1e-8, p=2, dim=1)  # 注意dim=1（batch维度）
         x = self.q_layer(x)
-        if len(x.shape) == 1:
-            x = x.unsqueeze(1)
+        x = x.unsqueeze(1)  # 确保输出形状匹配
         x = self.output(x)
-        # assert not torch.isnan(x).any(), "Detected NaN in output layer"
         return F.log_softmax(x, dim=1)
 
 
@@ -165,10 +165,12 @@ class QuantumClassifier(nn.Module):
 # 3. Data Transform (Only 8 pixels used)
 # -----------------------------
 transform = transforms.Compose([
-    transforms.Lambda(lambda x: x.view(-1)),  # 展平为 784
-    transforms.Lambda(lambda x: F.pad(x, (0, 256 - 784))) if 784 < 256 else transforms.Lambda(lambda x: x[:256]),
-    transforms.Lambda(lambda x: torch.clamp(x, -1.0, 1.0)),  # ✨ 限制在振幅有效区间
-    transforms.Lambda(lambda x: F.normalize(x, p=2, dim=0))  # L2 归一化
+    transforms.Lambda(lambda x: x.view(-1)),  # 展平为784
+    # 修正：当原维度>256时截断，否则填充（原逻辑错误）
+    transforms.Lambda(lambda x: x[:256] if x.shape[0] > 256 else F.pad(x, (0, 256 - x.shape[0]))),
+    transforms.Lambda(lambda x: torch.clamp(x, -1.0, 1.0)),
+    # 添加epsilon防止除零
+    transforms.Lambda(lambda x: F.normalize(x + 1e-8, p=2, dim=0)) 
 ])
 
 benchmark = SplitMNIST(n_experiences=5, return_task_id=False,
@@ -179,7 +181,7 @@ benchmark = SplitMNIST(n_experiences=5, return_task_id=False,
 # -----------------------------
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = QuantumClassifier().to(device)
-optimizer = optim.Adam(model.parameters(), lr=0.005)
+optimizer = optim.Adam(model.parameters(), lr=0.001)
 criterion = nn.NLLLoss()
 
 interactive_logger = InteractiveLogger()
@@ -204,6 +206,13 @@ strategy = EWC(
     device=device,
     evaluator=eval_plugin
 )
+
+
+class GradientClipPlugin(SupervisedPlugin):
+    def before_backward(self, strategy, **kwargs):
+        torch.nn.utils.clip_grad_norm_(strategy.model.parameters(), max_norm=1.0)
+
+strategy.plugins.append(GradientClipPlugin())
 
 # -----------------------------
 # 5. Training & Accuracy Recording
