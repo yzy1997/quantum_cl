@@ -70,7 +70,7 @@
 # plt.show()
 
 
-# In[9]:
+# In[1]:
 
 
 import torch
@@ -90,9 +90,10 @@ accuracy_metrics, loss_metrics, timing_metrics, cpu_usage_metrics, \
 confusion_matrix_metrics, disk_usage_metrics
 from avalanche.logging import InteractiveLogger
 import pickle
+import os
 
 
-# In[ ]:
+# In[2]:
 
 
 # -----------------------------
@@ -158,7 +159,7 @@ class QuantumClassifier(nn.Module):
         return F.log_softmax(x, dim=1)
 
 
-# In[ ]:
+# In[3]:
 
 
 # -----------------------------
@@ -226,15 +227,19 @@ for experience in benchmark.train_stream:
     print("--- Evaluating on test stream ---")
     results = strategy.eval(benchmark.test_stream)
 
-    acc = results['Top1_Acc_Stream/eval_phase/test_stream/Task000']
-    task_accuracies.append(acc)
-    
+    task_accuracies.append(results)
+ 
+# Define the file path
+file_path = "results/list/splitminist_EWC_qbit8_qdepth10.pkl"
+
+# Create directories if they don't exist
+os.makedirs(os.path.dirname(file_path), exist_ok=True)  # <-- Add this line   
 
 # 存储到文件
-with open("results/list/splitminist_EWC_qbit8_qdepth10.pkl", "wb") as f:
-    pickle.dump(results, f)  
+with open(file_path, "wb") as f:
+    pickle.dump(task_accuracies, f)  
     
-with open("results/list/splitminist_EWC_qbit8_qdepth10.pkl", "rb") as f:
+with open(file_path, "rb") as f:
     results = pickle.load(f)  
 
 
