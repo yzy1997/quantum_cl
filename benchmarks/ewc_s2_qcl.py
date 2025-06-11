@@ -107,63 +107,65 @@ class QuantumClassifier(nn.Module):
         return F.log_softmax(x, dim=1)
 
 
-# In[7]:
+# In[ ]:
 
 
-# -----------------------------------------------------------------------------
-# 1) 用 SplitMNIST 的 train_stream 来增量拟合 PCA
-# -----------------------------------------------------------------------------
-# 先建一个只为了 PCA 拟合的 benchmark，不给它任何 transform
-benchmark_pca = SplitMNIST(
-    n_experiences=5,
-    return_task_id=False,
-    train_transform=None,   # 这里不做任何转码，dataset 直接产出 PIL.Image
-    eval_transform=None
-)
+# # -----------------------------------------------------------------------------
+# # 1) 用 SplitMNIST 的 train_stream 来增量拟合 PCA
+# # -----------------------------------------------------------------------------
+# # 先建一个只为了 PCA 拟合的 benchmark，不给它任何 transform
+# benchmark_pca = SplitMNIST(
+#     n_experiences=5,
+#     return_task_id=False,
+#     train_transform=None,   # 这里不做任何转码，dataset 直接产出 PIL.Image
+#     eval_transform=None
+# )
 
-# IncrementalPCA(784 → 256)
-ipca = IncrementalPCA(n_components=256)
-batch_size = 512
-processed = []
-# 2) 每个 experience，收集所有样本到一个数组，再按块拟合
-for experience in benchmark_pca.train_stream:
-    exp_id = experience.current_experience
-    # 收集本 experience 的所有展平图像
-    all_imgs = []
-    all_labels = []
-    for sample in experience.dataset:
-        # sample 可能是 (img, label, task_id)
-        img = sample[0]                    # PIL.Image
-        label = sample[1]                  # 对应的 label
-        arr = np.array(img, np.float32).reshape(-1)  # (784,)
-        all_imgs.append(arr)
-        all_labels.append(int(label))
-    all_imgs = np.stack(all_imgs, axis=0)  # (Ni, 784)
+# # IncrementalPCA(784 → 256)
+# ipca = IncrementalPCA(n_components=256)
+# batch_size = 512
+# processed = []
+# # 2) 每个 experience，收集所有样本到一个数组，再按块拟合
+# for experience in benchmark_pca.train_stream:
+#     exp_id = experience.current_experience
+#     # 收集本 experience 的所有展平图像
+#     all_imgs = []
+#     all_labels = []
+#     for sample in experience.dataset:
+#         # sample 可能是 (img, label, task_id)
+#         img = sample[0]                    # PIL.Image
+#         label = sample[1]                  # 对应的 label
+#         arr = np.array(img, np.float32).reshape(-1)  # (784,)
+#         all_imgs.append(arr)
+#         all_labels.append(int(label))
+#     all_imgs = np.stack(all_imgs, axis=0)  # (Ni, 784)
 
-    # 增量拟合 PCA
-    n_full = (all_imgs.shape[0] // batch_size) * batch_size
-    for i in range(0, n_full, batch_size):
-        ipca.partial_fit(all_imgs[i : i + batch_size])
-    # 可选：丢弃尾部不足 batch_size 的样本
+#     # 增量拟合 PCA
+#     n_full = (all_imgs.shape[0] // batch_size) * batch_size
+#     for i in range(0, n_full, batch_size):
+#         ipca.partial_fit(all_imgs[i : i + batch_size])
+#     # 可选：丢弃尾部不足 batch_size 的样本
 
-    # 同时保存降维后的结果
-    arr256_all = ipca.transform(all_imgs[:n_full])  # (n_full, 256)
-    for vec, lbl in zip(arr256_all, all_labels[:n_full]):
-        processed.append((vec.astype(np.float32), lbl, exp_id))
+#     # 同时保存降维后的结果
+#     arr256_all = ipca.transform(all_imgs[:n_full])  # (n_full, 256)
+#     for vec, lbl in zip(arr256_all, all_labels[:n_full]):
+#         processed.append((vec.astype(np.float32), lbl, exp_id))
 
-print("✔ PCA 拟合并数据预处理完成，样本已收集到 `processed` 列表。")
+# print("✔ PCA 拟合并数据预处理完成，样本已收集到 `processed` 列表。")
 
-# 保存到文件
-os.makedirs("/home/yangz2/code/quantum_cl/data", exist_ok=True)
-with open(os.path.join("/home/yangz2/code/quantum_cl/data", "splitmnist_pca256.pkl"), 'wb') as f:
-    pickle.dump(processed, f)
-print("✔ 所有样本已处理并保存到 /home/yangz2/code/quantum_cl/data/splitmnist_pca256.pkl")
-
-
-
-# In[10]:
+# # 保存到文件
+# os.makedirs("/home/yangz2/code/quantum_cl/data", exist_ok=True)
+# with open(os.path.join("/home/yangz2/code/quantum_cl/data", "splitmnist_pca256.pkl"), 'wb') as f:
+#     pickle.dump(processed, f)
+# print("✔ 所有样本已处理并保存到 /home/yangz2/code/quantum_cl/data/splitmnist_pca256.pkl")
 
 
+
+# In[13]:
+
+
+with open(os.path.join("/home/yangz2/code/quantum_cl/data", "splitmnist_pca256.pkl"), 'rb') as f:
+    processed = pickle.load(f)
 # 1) Reconstruct per‐experience TensorDatasets
 datasets_by_exp = {}
 for vec, label, exp_id in processed:
@@ -234,7 +236,7 @@ class GradientClipPlugin(SupervisedPlugin):
 strategy.plugins.append(GradientClipPlugin())
 
 
-# In[12]:
+# In[ ]:
 
 
 # -----------------------------
