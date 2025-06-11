@@ -8,12 +8,17 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+from torch.utils.data import DataLoader, TensorDataset
+from torchvision import datasets, transforms
 import matplotlib.pyplot as plt
 import pennylane as qml
 from pennylane.qnn import TorchLayer
 from torchvision import transforms
+from sklearn.decomposition import IncrementalPCA
+
 
 from avalanche.benchmarks.classic import SplitMNIST
+from avalanche.benchmarks import nc_benchmark
 from avalanche.training import EWC
 from avalanche.training.plugins import EvaluationPlugin,SupervisedPlugin
 from avalanche.evaluation.metrics import forgetting_metrics, \
@@ -25,7 +30,7 @@ import os
 import numpy as np
 
 
-# In[52]:
+# In[4]:
 
 
 n_qubits = 8
@@ -68,7 +73,7 @@ plt.show()
     
 
 
-# In[54]:
+# In[5]:
 
 
 # -----------------------------
@@ -102,28 +107,94 @@ class QuantumClassifier(nn.Module):
         return F.log_softmax(x, dim=1)
 
 
-# In[55]:
+# In[7]:
 
 
-# -----------------------------
-# 3. Data Transform (Select 8 pixels)
-# -----------------------------
-def select_and_normalize(x):
-    x = torch.tensor(np.array(x), dtype=torch.float32).view(-1)  # 784
-    x = x[:256]             # 取前 256
-    # 幅度编码会 normalize，这里只做简单缩放到 [-1,1]
-    x = (x - x.mean()) / x.std()
-    return x
+# -----------------------------------------------------------------------------
+# 1) 用 SplitMNIST 的 train_stream 来增量拟合 PCA
+# -----------------------------------------------------------------------------
+# 先建一个只为了 PCA 拟合的 benchmark，不给它任何 transform
+benchmark_pca = SplitMNIST(
+    n_experiences=5,
+    return_task_id=False,
+    train_transform=None,   # 这里不做任何转码，dataset 直接产出 PIL.Image
+    eval_transform=None
+)
 
-transform = transforms.Compose([
-    transforms.Lambda(select_and_normalize)
-])
+# IncrementalPCA(784 → 256)
+ipca = IncrementalPCA(n_components=256)
+batch_size = 512
+processed = []
+# 2) 每个 experience，收集所有样本到一个数组，再按块拟合
+for experience in benchmark_pca.train_stream:
+    exp_id = experience.current_experience
+    # 收集本 experience 的所有展平图像
+    all_imgs = []
+    all_labels = []
+    for sample in experience.dataset:
+        # sample 可能是 (img, label, task_id)
+        img = sample[0]                    # PIL.Image
+        label = sample[1]                  # 对应的 label
+        arr = np.array(img, np.float32).reshape(-1)  # (784,)
+        all_imgs.append(arr)
+        all_labels.append(int(label))
+    all_imgs = np.stack(all_imgs, axis=0)  # (Ni, 784)
 
-benchmark = SplitMNIST(n_experiences=5, return_task_id=False,
-                       train_transform=transform, eval_transform=transform)
+    # 增量拟合 PCA
+    n_full = (all_imgs.shape[0] // batch_size) * batch_size
+    for i in range(0, n_full, batch_size):
+        ipca.partial_fit(all_imgs[i : i + batch_size])
+    # 可选：丢弃尾部不足 batch_size 的样本
+
+    # 同时保存降维后的结果
+    arr256_all = ipca.transform(all_imgs[:n_full])  # (n_full, 256)
+    for vec, lbl in zip(arr256_all, all_labels[:n_full]):
+        processed.append((vec.astype(np.float32), lbl, exp_id))
+
+print("✔ PCA 拟合并数据预处理完成，样本已收集到 `processed` 列表。")
+
+# 保存到文件
+os.makedirs("/home/yangz2/code/quantum_cl/data", exist_ok=True)
+with open(os.path.join("/home/yangz2/code/quantum_cl/data", "splitmnist_pca256.pkl"), 'wb') as f:
+    pickle.dump(processed, f)
+print("✔ 所有样本已处理并保存到 /home/yangz2/code/quantum_cl/data/splitmnist_pca256.pkl")
 
 
-# In[56]:
+
+# In[10]:
+
+
+# 1) Reconstruct per‐experience TensorDatasets
+datasets_by_exp = {}
+for vec, label, exp_id in processed:
+    datasets_by_exp.setdefault(exp_id, {"X": [], "y": []})
+    datasets_by_exp[exp_id]["X"].append(vec)
+    datasets_by_exp[exp_id]["y"].append(label)
+
+# 2) Make lists of datasets and task labels
+train_datasets = []
+test_datasets  = []
+task_labels    = []
+for exp_id in sorted(datasets_by_exp):
+    X = torch.stack([torch.tensor(v) for v in datasets_by_exp[exp_id]["X"]])
+    y = torch.tensor(datasets_by_exp[exp_id]["y"], dtype=torch.long)
+    ds = torch.utils.data.TensorDataset(X, y)
+    train_datasets.append(ds)
+    test_datasets.append(ds)      # or build a separate test split
+    task_labels.append(0)         # every experience uses task 0
+
+# 3) Create the continual‐learning benchmark
+benchmark = nc_benchmark(
+    train_datasets,
+    test_datasets,
+    n_experiences=len(train_datasets),
+    task_labels=task_labels,
+)
+
+print("✔ Created nc_benchmark from preprocessed PCA data")
+
+
+# In[11]:
 
 
 # -----------------------------
@@ -163,7 +234,7 @@ class GradientClipPlugin(SupervisedPlugin):
 strategy.plugins.append(GradientClipPlugin())
 
 
-# In[57]:
+# In[12]:
 
 
 # -----------------------------
