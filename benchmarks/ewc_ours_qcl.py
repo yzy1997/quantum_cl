@@ -216,11 +216,11 @@ for experience in benchmark.train_stream:
     task_accuracies.append(results)
     
     # 保存中间结果
-    with open(os.path.join(save_dir, f"interim_results_exp_{experience.current_experience}.pkl"), "wb") as f:
+    with open(os.path.join(save_dir, f"splitmnist_EWC_ours_qbit8_qdepth4_tepoch10_lambda1_interim_results_exp_{experience.current_experience}.pkl"), "wb") as f:
         pickle.dump(task_accuracies, f)
 
 # 保存最终结果
-with open(os.path.join(save_dir, "splitmnist_EWC_ours_qbit8_qdepth4_tepoch10.pkl"), "wb") as f:
+with open(os.path.join(save_dir, "splitmnist_EWC_ours_qbit8_qdepth4_tepoch10_lambda1.pkl"), "wb") as f:
     pickle.dump(task_accuracies, f)
 
 print("✔ Training and evaluation completed!")
