@@ -202,7 +202,7 @@ print("✔ Created nc_benchmark from preprocessed PCA data")
 # -----------------------------
 # 4. Avalanche EWC Strategy Setup
 # -----------------------------
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
 model = QuantumClassifier().to(device)
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 criterion = nn.NLLLoss()
@@ -223,11 +223,14 @@ strategy = EWC(
     model=model,
     optimizer=optimizer,
     criterion=criterion,
-    ewc_lambda=0.4,
+    ewc_lambda=0.4,        # 调整正则化强度
+    mode='separate',       # 使用独立Fisher矩阵
+    decay_factor=None,     # 禁用衰减
     train_epochs=10,
     device=device,
     evaluator=eval_plugin
 )
+
 
 class GradientClipPlugin(SupervisedPlugin):
     def before_backward(self, strategy, **kwargs):

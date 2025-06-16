@@ -92,7 +92,7 @@ plt.show()
 # In[46]:
 
 
-device = "cuda:1" if torch.cuda.is_available() else "cpu"
+device = "cuda:0" if torch.cuda.is_available() else "cpu"
 # 量子-经典混合网络
 class DressedQuantumNet(nn.Module):
     def __init__(self, n_qubits, n_layers, q_depth, q_delta, num_classes=10):
@@ -189,7 +189,9 @@ strategy = EWC(
     model=model,
     optimizer=optimizer,
     criterion=criterion,
-    ewc_lambda=1,
+    ewc_lambda=0.4,        # 调整正则化强度
+    mode='separate',       # 使用独立Fisher矩阵
+    decay_factor=None,     # 禁用衰减
     train_epochs=10,
     device=device,
     evaluator=eval_plugin

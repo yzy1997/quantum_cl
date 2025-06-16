@@ -1,6 +1,12 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+# In[ ]:
+
+
+#!/usr/bin/env python
+# coding: utf-8
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -22,30 +28,43 @@ import pickle
 import os
 
 # 设备设置
-device = "cuda:2" if torch.cuda.is_available() else "cpu"
+device = "cuda:1" if torch.cuda.is_available() else "cpu"
 
 # 普通CNN网络定义
 class SimpleCNN(nn.Module):
     def __init__(self, num_classes=10):
         super().__init__()
+        # 输入通道为1（灰度图像），输出通道为16，卷积核大小3x3
         self.conv1 = nn.Conv2d(1, 16, kernel_size=3, stride=1, padding=1)
         self.conv2 = nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1)
         self.fc1 = nn.Linear(32 * 7 * 7, 128)  # 假设输入是28x28，经过两次池化后为7x7
         self.fc2 = nn.Linear(128, num_classes)
         
     def forward(self, x):
+        # 输入形状: [batch, 256] -> 需要reshape为图像格式
+        # 假设原始图像是16x16 (256=16x16)，但我们知道MNIST是28x28
+        # 这里我们reshape为28x28 (784个像素)，但我们只有256个特征
+        # 所以我们需要上采样或填充 - 这里我们使用简单的线性层进行转换
+        
+        # 如果输入是256维特征，先转换为784维
         if x.shape[1] == 256:
             x = x.view(-1, 1, 16, 16)  # 16x16=256
+            # 上采样到28x28
             x = F.interpolate(x, size=(28, 28), mode='bilinear', align_corners=False)
         else:
+            # 如果输入已经是图像格式
             x = x.view(-1, 1, 28, 28)
         
+        # 卷积层
         x = F.relu(self.conv1(x))
         x = F.max_pool2d(x, 2)  # 28x28 -> 14x14
         x = F.relu(self.conv2(x))
         x = F.max_pool2d(x, 2)  # 14x14 -> 7x7
         
+        # 展平
         x = x.view(-1, 32 * 7 * 7)
+        
+        # 全连接层
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
         return x
@@ -85,59 +104,9 @@ benchmark = nc_benchmark(
 
 print("✔ 使用预处理好的 PCA 数据创建了 nc_benchmark")
 
-# ----------------------------------------------------------------------------- 
-# 定义自定义EWC（Elastic Weight Consolidation）策略
-# ----------------------------------------------------------------------------- 
-
-class CustomEWC(EWC):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fisher_matrices = {}
-        self.optimal_weights = {}
-
-    def update_fisher_information(self, experience):
-        fisher_matrix = {}
-        for name, param in self.model.named_parameters():
-            fisher_matrix[name] = torch.zeros_like(param)
-
-        self.model.eval()
-        for sample, target in experience.dataset:
-            self.optimizer.zero_grad()
-            output = self.model(sample)
-            loss = self.criterion(output, target)
-            loss.backward()
-
-            # Store second-order derivatives (i.e., Fisher Information)
-            for name, param in self.model.named_parameters():
-                fisher_matrix[name] += param.grad ** 2 / len(experience.dataset)
-
-        self.fisher_matrices[experience.current_experience] = fisher_matrix
-        self.optimal_weights[experience.current_experience] = {
-            name: param.clone() for name, param in self.model.named_parameters()
-        }
-
-    def penalty_loss(self, experience):
-        penalty = 0
-        for name, param in self.model.named_parameters():
-            fisher_matrix = self.fisher_matrices.get(experience.current_experience)
-            optimal_weight = self.optimal_weights.get(experience.current_experience)
-            if fisher_matrix is not None and optimal_weight is not None:
-                penalty += (fisher_matrix[name] * (param - optimal_weight[name]) ** 2).sum()
-        return penalty
-
-    def train(self, experience):
-        super().train(experience)
-        # Update Fisher Information after each experience
-        self.update_fisher_information(experience)
-
-    def eval(self, experience):
-        penalty = self.penalty_loss(experience)
-        return super().eval(experience) + penalty
-
-
-# ----------------------------------------------------------------------------- 
+# -----------------------------------------------------------------------------
 # 设置训练环境
-# ----------------------------------------------------------------------------- 
+# -----------------------------------------------------------------------------
 model = SimpleCNN(num_classes=10).to(device)
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 criterion = nn.CrossEntropyLoss()
@@ -155,22 +124,25 @@ eval_plugin = EvaluationPlugin(
     loggers=[interactive_logger]
 )
 
-# ----------------------------------------------------------------------------- 
-# 使用 EWC 持续学习策略
-# ----------------------------------------------------------------------------- 
-strategy = CustomEWC(
+
+# -----------------------------------------------------------------------------
+# 使用带有Fisher Matrix的EWC持续学习策略
+# -----------------------------------------------------------------------------
+strategy = EWC(
     model=model,
     optimizer=optimizer,
     criterion=criterion,
-    ewc_lambda=1,
+    ewc_lambda=0.4,        # 调整正则化强度
+    mode='separate',       # 使用独立Fisher矩阵
+    decay_factor=None,     # 禁用衰减
     train_epochs=10,
     device=device,
     evaluator=eval_plugin
 )
 
-# ----------------------------------------------------------------------------- 
+# -----------------------------------------------------------------------------
 # 开始训练与评估
-# ----------------------------------------------------------------------------- 
+# -----------------------------------------------------------------------------
 task_accuracies = []
 save_dir = "/home/yangz2/code/quantum_cl/results/list"
 os.makedirs(save_dir, exist_ok=True)
@@ -185,11 +157,12 @@ for experience in benchmark.train_stream:
     task_accuracies.append(results)
     
     # 保存中间结果
-    with open(os.path.join(save_dir, f"splitmnist_EWC_classic_fisher_interim_results_exp_{experience.current_experience}.pkl"), "wb") as f:
+    with open(os.path.join(save_dir, f"splitmnist_EWC_classic_cnn_interim_results_exp_{experience.current_experience}.pkl"), "wb") as f:
         pickle.dump(task_accuracies, f)
 
 # 保存最终结果
-with open(os.path.join(save_dir, "splitmnist_EWC_classic_fisher_final.pkl"), "wb") as f:
+with open(os.path.join(save_dir, "splitmnist_EWC_classic_cnn_final.pkl"), "wb") as f:
     pickle.dump(task_accuracies, f)
 
 print("✔ Training and evaluation completed!")
+

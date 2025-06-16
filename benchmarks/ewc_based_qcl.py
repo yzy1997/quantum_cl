@@ -180,7 +180,7 @@ benchmark = SplitMNIST(n_experiences=5, return_task_id=False,
 # -----------------------------
 # 4. Avalanche EWC Strategy Setup
 # -----------------------------
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
 model = QuantumClassifier().to(device)
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 criterion = nn.NLLLoss()
@@ -202,8 +202,10 @@ strategy = EWC(
     model=model,
     optimizer=optimizer,
     criterion=criterion,
-    ewc_lambda=0.4,
-    train_epochs=40,
+    ewc_lambda=0.4,        # 调整正则化强度
+    mode='separate',       # 使用独立Fisher矩阵
+    decay_factor=None,     # 禁用衰减
+    train_epochs=10,
     device=device,
     evaluator=eval_plugin
 )
@@ -220,12 +222,34 @@ strategy.plugins.append(GradientClipPlugin())
 # -----------------------------
 task_accuracies = []
 
+# for experience in benchmark.train_stream:
+#     print(f"\n--- Training on experience {experience.current_experience} ---")
+#     experience = experience.to(device)
+#     strategy.train(experience)
+
+#     print("--- Evaluating on test stream ---")
+#     results = strategy.eval(benchmark.test_stream)
+#     benchmark.test_stream = benchmark.test_stream.to(device)  # 确保测试流在同一设备上
+
+#     task_accuracies.append(results)
 for experience in benchmark.train_stream:
     print(f"\n--- Training on experience {experience.current_experience} ---")
+    
+    # Move inputs and targets to the device
+    experience_inputs, experience_targets = experience.get_data()
+    experience_inputs = experience_inputs.to(device)
+    experience_targets = experience_targets.to(device)
+    
+    # Create a new experience with the moved data
+    experience = experience.__class__(experience_inputs, experience_targets, experience.task_label)
+    
     strategy.train(experience)
 
     print("--- Evaluating on test stream ---")
     results = strategy.eval(benchmark.test_stream)
+    
+    # Ensure test stream data is moved to the correct device
+    benchmark.test_stream = benchmark.test_stream.to(device)  # Move test stream to device
 
     task_accuracies.append(results)
  
