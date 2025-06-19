@@ -1,16 +1,12 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
-
-
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
-from torch.utils.data import DataLoader, TensorDataset
+from torch.utils.data import DataLoader
 from torchvision import transforms
-from sklearn.decomposition import IncrementalPCA
 from avalanche.benchmarks.classic import SplitMNIST
 from avalanche.training import Naive
 from avalanche.training.plugins import EvaluationPlugin, ReplayPlugin
@@ -18,18 +14,12 @@ from avalanche.evaluation.metrics import forgetting_metrics, \
 accuracy_metrics, loss_metrics, timing_metrics, cpu_usage_metrics, \
 confusion_matrix_metrics, disk_usage_metrics
 from avalanche.logging import InteractiveLogger
-from avalanche.benchmarks import nc_benchmark
 import pennylane as qml
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.decomposition import IncrementalPCA
 import pickle
 import os
 from pennylane.qnn import TorchLayer
-
-
-# In[2]:
-
 
 # 量子电路参数
 n_qubits = 8
@@ -39,10 +29,6 @@ q_delta = 0.1
 
 # 量子计算设备设置
 dev = qml.device("lightning.qubit", wires=n_qubits)
-
-
-# In[ ]:
-
 
 # 量子电路定义
 def phase_layer(w):
@@ -83,26 +69,31 @@ def quantum_net_3(q_input_features, q_weights_flat):
     exp_val = [qml.expval(qml.PauliZ(position)) for position in range(n_qubits)]
     return exp_val
 
-# 使用量子电路图
-qml.drawer.use_style("pennylane")
-fig, ax = qml.draw_mpl(quantum_net_3)(torch.randn(n_qubits, q_depth), q_delta * torch.randn(q_depth * n_qubits))
-plt.show()
-
-
-# In[46]:
-
-
 device = "cuda:1" if torch.cuda.is_available() else "cpu"
-# 量子-经典混合网络
+
+# 量子-经典混合网络 - 使用原始28x28维度输入
 class DressedQuantumNet(nn.Module):
     def __init__(self, n_qubits, n_layers, q_depth, q_delta, num_classes=10):
         super().__init__()
-        self.pre_net = nn.Linear(256, n_qubits)  # input 512 to n_qubits
+        # 使用更强大的预处理网络处理原始28x28图像
+        self.pre_net = nn.Sequential(
+            nn.Conv2d(1, 16, kernel_size=3, padding=1),  # 输入通道1，输出通道16
+            nn.ReLU(),
+            nn.MaxPool2d(2),  # 28x28 -> 14x14
+            nn.Conv2d(16, 32, kernel_size=3, padding=1),  # 输入通道16，输出通道32
+            nn.ReLU(),
+            nn.MaxPool2d(2),  # 14x14 -> 7x7
+            nn.Flatten(),  # 7x7x32 = 1568
+            nn.Linear(1568, 256),  # 降维到256
+            nn.ReLU(),
+            nn.Linear(256, n_qubits)  # 最终输出量子比特数
+        )
         self.q_params = torch.nn.Parameter(q_delta * torch.randn(q_depth * n_qubits, requires_grad=True))
         self.post_net = nn.Linear(n_qubits, num_classes)
 
     def forward(self, input_features):
         """Forward pass through the quantum-encoded network."""
+        # 输入形状: (batch_size, 1, 28, 28)
         pre_out = self.pre_net(input_features.to(device))
         q_in = torch.tanh(pre_out) * np.pi / 2.0  # Map to quantum input range
 
@@ -113,50 +104,23 @@ class DressedQuantumNet(nn.Module):
 
         return self.post_net(q_out)
 
+# 创建数据预处理转换
+transform = transforms.Compose([
+    # transforms.ToTensor(),
+    transforms.Normalize((0.1307,), (0.3081,))
+])
 
-# In[47]:
-
-
-# Step 1: 加载预处理好的 PCA 数据
-with open("/home/yangz2/code/quantum_cl/data/splitmnist_pca256.pkl", 'rb') as f:
-    processed = pickle.load(f)
-
-# Step 2: 重构每个经验的 TensorDatasets（train/val）
-datasets_by_exp = {}
-for vec, label, exp_id in processed:
-    datasets_by_exp.setdefault(exp_id, {"X": [], "y": []})
-    datasets_by_exp[exp_id]["X"].append(vec)
-    datasets_by_exp[exp_id]["y"].append(label)
-
-# Step 3: 将每个 experience 的数据打包为 TensorDatasets
-train_datasets = []
-test_datasets = []
-task_labels = []
-for exp_id in sorted(datasets_by_exp):
-    X = torch.stack([torch.tensor(v) for v in datasets_by_exp[exp_id]["X"]])
-    y = torch.tensor(datasets_by_exp[exp_id]["y"], dtype=torch.long)
-    
-    # 可选：划分训练集和测试集
-    # 在这里我们将训练集和测试集都设置为同一个，您可以按需调整
-    ds = TensorDataset(X, y)
-    
-    train_datasets.append(ds)
-    test_datasets.append(ds)  # 或者单独为 test 数据集创建 TensorDataset
-    task_labels.append(0)  # 每个经验都使用任务 0，可以根据需要进行修改
-
-# Step 4: 使用 nc_benchmark 创建持续学习基准
-benchmark = nc_benchmark(
-    train_datasets, 
-    test_datasets, 
-    n_experiences=len(train_datasets),
-    task_labels=task_labels
+# 直接使用 Avalanche 的 SplitMNIST 创建 benchmark
+benchmark = SplitMNIST(
+    n_experiences=5,
+    return_task_id=False,
+    train_transform=transform,
+    eval_transform=transform
 )
 
-print("✔ 使用预处理好的 PCA 数据创建了 nc_benchmark")
-
-
-# In[48]:
-
+# 打印benchmark信息
+print("Number of experiences in train stream:", len(benchmark.train_stream))
+print("Number of experiences in test stream:", len(benchmark.test_stream))
 
 # -----------------------------------------------------------------------------
 # 设置训练环境
@@ -178,12 +142,8 @@ eval_plugin = EvaluationPlugin(
     loggers=[interactive_logger]
 )
 
-
-# In[ ]:
-
-
 # -----------------------------------------------------------------------------
-# 使用 EWC 持续学习策略
+# 使用 Replay 持续学习策略
 # -----------------------------------------------------------------------------
 replay_plugin = ReplayPlugin(
     mem_size=200,
@@ -201,10 +161,6 @@ strategy = Naive(
     evaluator=eval_plugin,
     plugins=[replay_plugin]
 )
-
-
-# In[ ]:
-
 
 # -----------------------------------------------------------------------------
 # 开始训练与评估
@@ -231,4 +187,3 @@ with open(os.path.join(save_dir, "splitmnist_er_ours_qbit8_qdepth4_tepoch10.pkl"
     pickle.dump(task_accuracies, f)
 
 print("✔ Training and evaluation completed!")
-
