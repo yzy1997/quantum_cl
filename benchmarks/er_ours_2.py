@@ -260,8 +260,22 @@ for experience in benchmark.train_stream:
         pickle.dump(task_accuracies, f)
     
     # 打印当前准确率
-    acc = results['Accuracy_Stream/eval_phase/test_stream/Task000']
-    print(f"Global accuracy after experience {experience.current_experience}: {acc*100:.2f}%")
+    acc_key = 'Top1_Acc_Stream/eval_phase/test_stream/Task000'
+    if acc_key in results:
+        acc = results[acc_key]
+        print(f"Global accuracy after experience {experience.current_experience}: {acc*100:.2f}%")
+    else:
+        # 列出所有键以便调试
+        print(f"Error: Accuracy key not found. Available keys: {list(results.keys())}")
+        # 尝试找到类似的键
+        for key in results.keys():
+            if "Acc_Stream" in key:
+                acc = results[key]
+                print(f"Found alternative accuracy key: {key} = {acc*100:.2f}%")
+                break
+        else:
+            acc = 0.0
+            print("No accuracy metric found in results")
 
 # 保存最终结果
 with open(os.path.join(save_dir, f"splitmnist_er_ours_qbit{n_qubits}_qdepth{q_depth}_tepoch{train_epochs}.pkl"), "wb") as f:
