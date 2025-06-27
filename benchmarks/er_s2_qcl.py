@@ -267,7 +267,7 @@ for experience in benchmark.train_stream:
         pickle.dump(task_accuracies, f)
 
 # Save final results
-with open(os.path.join(save_dir, "splitmnist_er_s2_qbit8_qdepth4_tepoch10.pkl"), "wb") as f:
+with open(os.path.join(save_dir, "splitmnist_er_s2_qbit8_qdepth4_tepoch20.pkl"), "wb") as f:
     pickle.dump(task_accuracies, f)
 
 

@@ -8,8 +8,8 @@ import pickle
 
 # 导入Avalanche库
 from avalanche.benchmarks.classic import SplitMNIST
-from avalanche.training.plugins import GEMPlugin, EWCPlugin, EvaluationPlugin, LRSchedulerPlugin
-from avalanche.training.supervised import Naive
+from avalanche.training.plugins import EvaluationPlugin, LRSchedulerPlugin
+from avalanche.training.supervised import ER_ACE
 from avalanche.evaluation.metrics import accuracy_metrics, forgetting_metrics, loss_metrics, timing_metrics, cpu_usage_metrics, confusion_matrix_metrics, disk_usage_metrics
 from avalanche.logging import InteractiveLogger
 
@@ -85,33 +85,21 @@ eval_plugin = EvaluationPlugin(
     loggers=[interactive_logger]
 )
 
-# 6. 配置GEM策略（调优参数）
-gem_plugin = GEMPlugin(
-    patterns_per_experience=300,  # 每个任务保留300个样本
-    memory_strength=0.3          # 降低约束强度（更宽松）
-)
 
-# 7. 使用在线模式的EWC正则化插件
-ewc_plugin = EWCPlugin(
-    ewc_lambda=0.4,              # EWC正则化强度
-    mode="online",               # 必须设置为online才能使用decay_factor
-    decay_factor=0.9,            # Fisher矩阵衰减系数
-    keep_importance_data=True    # 保留重要性数据用于后续任务
-)
 
 # 8. 添加学习率调度器
 lr_scheduler = StepLR(optimizer, step_size=3, gamma=0.7)
 lr_plugin = LRSchedulerPlugin(lr_scheduler)
 
 # 9. 创建持续学习策略
-strategy = Naive(
+strategy = ER_ACE(
     model,
     optimizer,
     criterion,
     train_mb_size=128,           # 训练批次大小
     eval_mb_size=256,            # 评估批次大小
     train_epochs=15,             # 增加训练轮数
-    plugins=[gem_plugin, ewc_plugin, lr_plugin],
+    plugins=[lr_plugin],
     evaluator=eval_plugin,
     device=device,
     # eval_every=1                 # 每个epoch后都评估
