@@ -274,6 +274,6 @@ print("✔ Training and evaluation completed!")
 
 
 # 保存完整模型
-torch.save(model.state_dict(), os.path.join(save_dir, "final_model.pth"))
-print("Model saved successfully.")
+# torch.save(model.state_dict(), os.path.join(save_dir, "final_model.pth"))
+# print("Model saved successfully.")
 
