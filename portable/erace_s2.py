@@ -31,7 +31,7 @@ import os
 import numpy as np
 
 
-# In[2]:
+# In[4]:
 
 
 n_qubits = 10  # 10 个量子比特可以编码 2^10 = 1024 维数据
@@ -103,7 +103,7 @@ benchmark = SplitMNIST(
 )
 
 
-# In[10]:
+# In[ ]:
 
 
 # -----------------------------
