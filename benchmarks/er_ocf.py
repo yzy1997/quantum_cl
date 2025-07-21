@@ -182,7 +182,7 @@ import os
 # -----------------------------
 n_qubits = 10
 input_dim = 2**n_qubits  # 28 x 28 MNIST
-n_layers = 1  # ✅ Now actually used
+n_layers = 10  # ✅ Now actually used
 dev = qml.device("lightning.qubit", wires=n_qubits)
 
 def quantum_circuit(inputs, weights):
@@ -340,7 +340,7 @@ for experience in benchmark.train_stream:
 
 
 # Define the file path
-file_path = "/home/yangz2/code/quantum_cl/results/list/splitminist_ER_qbit10_qdepth1.pkl"
+file_path = "/home/yangz2/code/quantum_cl/results/list/splitminist_ER_ocf_qbit10_qdepth10.pkl"
 
 # Create directories if they don't exist
 os.makedirs(os.path.dirname(file_path), exist_ok=True)  # <-- Add this line   
